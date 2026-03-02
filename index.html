@@ -636,6 +636,7 @@
         });
 
         // ========== GitHub Issues 数据函数 ==========
+        // ========== GitHub Issues 数据函数（修复版）===========
         async function loadFromGitHub() {
             const token = GITHUB_CONFIG.getToken();
             if (!token) {
@@ -643,8 +644,10 @@
                 performInitialRender();
                 return;
             }
-
+        
             try {
+                console.log('开始加载 GitHub 数据...');
+                
                 // 获取所有带有 data 标签的 Issues
                 const response = await fetch(
                     `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues?labels=data&state=all&sort=created&direction=desc`,
@@ -656,9 +659,14 @@
                     }
                 );
                 
-                if (!response.ok) throw new Error('加载失败');
-                
+                if (!response.ok) {
+                    console.error('GitHub API 返回错误:', response.status);
+                    performInitialRender();
+                    return;
+                }
+        
                 const issues = await response.json();
+                console.log('找到 Issues 数量:', issues.length);
                 
                 if (issues.length > 0) {
                     // 取最新的 Issue
@@ -667,7 +675,6 @@
                     
                     regions = data.regions || [];
                     markers = data.markers || [];
-                    // 注意：users 不覆盖，保持代码里的默认值
                     mapImageData = data.mapImage || null;
                     
                     if (regions.length) {
@@ -678,13 +685,18 @@
                     }
                     
                     console.log('数据加载成功');
+                } else {
+                    console.log('没有找到数据 Issues，使用默认数据');
                 }
+                
             } catch (error) {
-                console.error('从 GitHub 加载失败', error);
+                console.error('从 GitHub 加载失败:', error);
             } finally {
+                // 隐藏设置 Token 按钮
+                document.getElementById('setupTokenBtn').style.display = 'none';
                 performInitialRender();
             }
-        }
+        }        
 
         async function saveToGitHub() {
             const token = GITHUB_CONFIG.getToken();
