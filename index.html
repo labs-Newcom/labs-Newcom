@@ -948,31 +948,23 @@
         // ========== 登录逻辑（最终版）==========
         // ========== 登录逻辑（终极版）==========
         // ========== 登录逻辑（硬核版）==========
+       // ========== 登录逻辑（诊断版）==========
         document.getElementById('loginBtn').addEventListener('click', function() {
             console.log('登录按钮被点击');
             
             const adminPwd = document.getElementById('adminPasswordInput').value;
+            console.log('输入的密码是:', adminPwd);  // 看这里输出了什么
             
-            // 只处理管理员登录
             if (adminPwd === 'admin123') {
-                console.log('密码正确，开始手动设置界面');
-                
-                // 直接复制你手动成功的代码
+                console.log('密码正确，开始设置界面');
                 document.body.className = 'admin-mode';
                 document.getElementById('statusMessage').innerText = 'admin';
                 document.getElementById('loginBtn').style.display = 'none';
                 document.getElementById('logoutBtn').style.display = 'inline-block';
                 document.getElementById('adminPasswordInput').style.display = 'none';
                 document.getElementById('userLoginFields').style.display = 'none';
-                
-                // 尝试显示管理员面板
-                const content = document.getElementById('adminContent');
-                if (content) {
-                    content.innerHTML = '<div style="color:white;">管理员面板已加载</div>';
-                }
-                
-                console.log('界面设置完成');
             } else {
+                console.log('密码错误或为空');
                 alert('密码错误');
             }
         });
