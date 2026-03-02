@@ -1106,6 +1106,7 @@
             
             // 如果是地图管理，还要渲染区域列表
             // ========== 渲染区域列表 ==========
+           // ========== 渲染区域列表（精简版）==========
             function renderRegionList() {
                 const container = document.getElementById('regionList');
                 if (!container) return;
@@ -1116,16 +1117,16 @@
                 }
                 
                 let html = '';
-                regions.forEach(r => {
-                    html += `
-                        <div style="background:#1b577b; border-radius:30px; padding:10px; margin:5px 0; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                            <span style="color:white; min-width:60px;">${r.name || '区域' + r.id}</span>
-                            <span style="color:#b0daff; font-size:0.8rem;">(${r.x1?.toFixed(0) || ''}, ${r.y1?.toFixed(0) || ''})</span>
-                            <button class="action-btn small" onclick="alert('编辑功能开发中')">编辑</button>
-                            <button class="action-btn small" style="background:#b16262;" onclick="alert('删除功能开发中')">删除</button>
-                        </div>
-                    `;
-                });
+                for (let i = 0; i < regions.length; i++) {
+                    const r = regions[i];
+                    html = html + 
+                        '<div style="background:#1b577b; border-radius:30px; padding:10px; margin:5px 0; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">' +
+                        '<span style="color:white; min-width:60px;">' + (r.name || '区域' + r.id) + '</span>' +
+                        '<span style="color:#b0daff; font-size:0.8rem;">' + (r.x1 ? r.x1.toFixed(0) : '') + ', ' + (r.y1 ? r.y1.toFixed(0) : '') + '</span>' +
+                        '<button class="action-btn small" onclick="alert(\'编辑功能开发中\')">编辑</button>' +
+                        '<button class="action-btn small" style="background:#b16262;" onclick="alert(\'删除功能开发中\')">删除</button>' +
+                        '</div>';
+                }
                 container.innerHTML = html;
             }
         // ========== 管理员标签切换 ==========
