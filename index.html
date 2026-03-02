@@ -982,10 +982,47 @@
         };
 
         // ========== 管理员内容渲染（简化版）==========
+        // ========== 管理员内容渲染（完整版）==========
         function renderAdminContent() {
             const content = document.getElementById('adminContent');
             if (!content) return;
-            content.innerHTML = '<div style="color:white;">管理员面板已加载</div>';
+            
+            const activeTab = document.querySelector('.admin-tab.active')?.dataset.tab || 'map';
+            
+            let html = '';
+            
+            if (activeTab === 'map') {
+                html = `
+                    <div style="color:white; margin-bottom:15px;">🗺️ 地图管理</div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
+                        <input type="file" id="mapUpload" accept="image/*" style="background:#0e3b57; color:white; padding:8px; border-radius:30px;">
+                        <button class="action-btn" id="clearMapBtn">清除地图</button>
+                    </div>
+                    <div id="regionList"></div>
+                `;
+            } else if (activeTab === 'users') {
+                html = `
+                    <div style="color:white; margin-bottom:15px;">👥 用户管理</div>
+                    <div id="userList"></div>
+                `;
+            } else if (activeTab === 'types') {
+                html = `
+                    <div style="color:white; margin-bottom:15px;">🏷️ 类型管理</div>
+                    <div id="typeList"></div>
+                `;
+            } else if (activeTab === 'export') {
+                html = `
+                    <div style="color:white; margin-bottom:15px;">📊 导出报告</div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <input type="date" id="exportStart" class="date-input">
+                        <span>至</span>
+                        <input type="date" id="exportEnd" class="date-input">
+                        <button class="action-btn" id="doExport">导出ZIP</button>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = html;
         }
 
         // ========== 管理员标签切换 ==========
