@@ -70,10 +70,18 @@
     currentFullDate = getTodayDate();
 
     // ========== 画布元素 ==========
+    // ========== 画布元素 ==========
     const mapImage = document.getElementById('mapImage');
     const mapCanvas = document.getElementById('mapCanvas');
-    const ctx = mapCanvas.getContext('2d');
     const mapContainer = document.getElementById('mapContainer');
+    let ctx = null;
+    
+    // 确保 canvas 存在后再获取 context
+    if (mapCanvas) {
+        ctx = mapCanvas.getContext('2d');
+    } else {
+        console.error('找不到 mapCanvas 元素');
+    }
 
     // ========== 画布函数 ==========
     function resizeCanvas() {
