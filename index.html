@@ -945,6 +945,7 @@
         // ========== 登录逻辑 ==========
         // ========== 登录逻辑（最终版）==========
         // ========== 登录逻辑（最终修复版）==========
+        // ========== 登录逻辑（最终版）==========
         document.getElementById('loginBtn').addEventListener('click', function() {
             console.log('登录按钮被点击');
             
@@ -955,26 +956,38 @@
             // 管理员登录
             if (adminPwd) {
                 if (adminPwd === 'admin123') {
+                    // 设置当前用户
                     currentUser = { username: 'admin', role: 'admin' };
                     currentMode = 'admin';
-                    updateUIBasedOnUser();
+                    console.log('currentUser 设置成功:', currentUser);
+                    
+                    // 直接手动更新界面（你已经验证这步有效）
+                    document.body.className = 'admin-mode';
+                    document.getElementById('statusMessage').innerText = 'admin';
+                    document.getElementById('loginBtn').style.display = 'none';
+                    document.getElementById('logoutBtn').style.display = 'inline-block';
+                    document.getElementById('adminPasswordInput').style.display = 'none';
+                    document.getElementById('userLoginFields').style.display = 'none';
+                    
+                    // 尝试调用 renderAdminContent 显示管理员面板
+                    renderAdminContent();
                 } else {
                     alert('密码错误');
                 }
                 return;
             }
             
-            // 普通用户登录
-            if (username && userPwd) {
-                const user = users.find(u => u.role === 'user' && u.username === username && u.password === userPwd);
-                if (user) {
-                    currentUser = user;
-                    currentMode = 'user';
-                    updateUIBasedOnUser();
-                } else {
-                    alert('用户名或密码错误');
-                }
-            }
+            // 普通用户登录（暂时注释掉，先确保管理员能进）
+            // if (username && userPwd) {
+            //     const user = users.find(u => u.role === 'user' && u.username === username && u.password === userPwd);
+            //     if (user) {
+            //         currentUser = user;
+            //         currentMode = 'user';
+            //         updateUIBasedOnUser();
+            //     } else {
+            //         alert('用户名或密码错误');
+            //     }
+            // }
         });
 
         document.getElementById('logoutBtn').onclick = () => {
