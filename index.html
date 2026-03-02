@@ -949,11 +949,20 @@
         // ========== 登录逻辑（终极版）==========
         // ========== 登录逻辑（硬核版）==========
        // ========== 登录逻辑（诊断版）==========
+        // ========== 登录逻辑（强制显示版）==========
         document.getElementById('loginBtn').addEventListener('click', function() {
             console.log('登录按钮被点击');
             
-            const adminPwd = document.getElementById('adminPasswordInput').value;
-            console.log('输入的密码是:', adminPwd);  // 看这里输出了什么
+            // 强制显示密码输入框（如果隐藏的话）
+            const pwdInput = document.getElementById('adminPasswordInput');
+            if (pwdInput.style.display === 'none') {
+                pwdInput.style.display = 'inline-block';
+                console.log('密码框已显示，请再次点击登录');
+                return;  // 这次先返回，让用户输入密码
+            }
+            
+            const adminPwd = pwdInput.value;
+            console.log('输入的密码是:', adminPwd);
             
             if (adminPwd === 'admin123') {
                 console.log('密码正确，开始设置界面');
