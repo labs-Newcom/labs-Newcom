@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>NEMM PTW SCREEN</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #102231;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+        }
+        .app-container {
+            max-width: 1200px;
+            width: 100%;
+            background: #0b1d2b;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: #0a2a3f;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #2d7bb0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: white;
+        }
+        .title span {
+            background: #ffd966;
+            color: #1a3d5c;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 8px;
+        }
+        
+        .mode-switch {
+            display: flex;
+            gap: 6px;
+            background: #1d415b;
+            padding: 4px;
+            border-radius: 40px;
+        }
+        .mode-btn {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            background: transparent;
+            color: white;
+        }
+        .mode-btn.active {
+            background: #3980b0;
+        }
+        
+        .login-area {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .login-input {
+            background: #12384f;
+            border: 1px solid #3b7aa3;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 30px;
+            width: 90px;
+            font-size: 0.85rem;
+        }
+        .login-input::placeholder {
+            color: #8aaec9;
+        }
+        .login-btn {
+            background: #2e6b94;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .logout-btn {
+            background: #5f4646;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 30px;
+            cursor: pointer;
+            display: none;
+            font-size: 0.85rem;
+        }
+        .status-badge {
+            color: #b3e0ff;
+            font-size: 0.8rem;
+        }
+        .token-setup {
+            background: #2d5b7c;
+            padding: 4px 10px;
+            border-radius: 30px;
+            color: white;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: 1px solid #7ab3dd;
+        }
+
+        .date-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: #0f2a3a;
+            border-bottom: 1px solid #2d5b7c;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .date-picker {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .date-input {
+            background: #0e3b57;
+            border: 1px solid #6fa9d3;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+        }
+        .today-btn {
+            background: #3980b0;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .date-grid {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding: 5px 0;
+            flex: 1;
+        }
+        .date-cell {
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #1e4d6e;
+            color: white;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: 2px solid transparent;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .date-cell.today {
+            background: #2e7d5e;
+            border-color: #a5e0c0;
+        }
+        .date-cell.selected {
+            background: #e6b422;
+            color: #1a3d5c;
+            font-weight: bold;
+        }
+        .date-cell.has-markers::after {
+            content: '•';
+            position: absolute;
+            bottom: 0;
+            right: 5px;
+            color: #ffaa66;
+        }
+
+        .map-section {
+            padding: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .map-container {
+            position: relative;
+            width: 100%;
+            background: #0a1f2b;
+            overflow: hidden;
+            flex: 1;
+            min-height: 300px;
+            aspect-ratio: auto;
+        }
+        #mapImage {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #0a1f2b;
+            pointer-events: none;
+        }
+        #mapCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            background: transparent;
+        }
+
+        .type-bar {
+            display: none;
+            justify-content: center;
+            gap: 12px;
+            padding: 10px 16px;
+            background: #123a50;
+            margin: 0;
+            flex-wrap: wrap;
+        }
+        body.user-mode .type-bar {
+            display: flex;
+        }
+        .type-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 3px solid transparent;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #0e2635;
+        }
+        .type-icon.selected {
+            border-color: #ffee99;
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #0e2635;
+        }
+
+        .input-bar {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #123a50;
+            margin: 0;
+        }
+        body.user-mode .input-bar {
+            display: flex;
+        }
+        #pendingNumber {
+            background: #124b68;
+            border: 1px solid #4790bd;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 30px;
+            width: 80px;
+            text-align: center;
+        }
+        .action-btn {
+            background: #2e7d5e;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .action-btn.cancel {
+            background: #764949;
+        }
+        #clickHint {
+            color: #b0daff;
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 8px 16px;
+        }
+
+        .summary-card {
+            background: #10384e;
+            border-radius: 24px;
+            padding: 16px;
+            margin: 16px;
+            border: 1px solid #357dab;
+            display: none;
+        }
+        .summary-title {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .summary-stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            background: #1f5579;
+            padding: 6px 14px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .admin-only {
+            display: none !important;
+        }
+        body.admin-mode .admin-only {
+            display: block !important;
+        }
+        .admin-panel {
+            padding: 16px;
+            background: #0f2a3a;
+            margin-top: 16px;
+        }
+        .admin-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .admin-tab {
+            background: #1e506f;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+        .admin-tab.active {
+            background: #3d80af;
+        }
+        .admin-content {
+            background: #123a50;
+            border-radius: 20px;
+            padding: 16px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+        .tip {
+            color: #b0daff;
+            font-size: 0.8rem;
+            text-align: center;
+            padding: 8px;
+        }
+    </style>
+    
+    <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+<div class="app-container">
+    <div class="top-bar">
+        <div class="title">
+            NEMM PTWSCREEN
+            <span>GitHub版</span>
+        </div>
+        <div class="mode-switch">
+            <button class="mode-btn" id="visitorModeBtn">👤 游客</button>
+            <button class="mode-btn" id="userModeBtn">👥 用户</button>
+            <button class="mode-btn admin-only" id="adminModeBtn">🔐 管理</button>
+        </div>
+        <div class="login-area">
+            <input type="password" id="adminPasswordInput" class="login-input" placeholder="管理密码" style="display: none;">
+            <div id="userLoginFields" style="display: none;">
+                <input type="text" id="usernameInput" class="login-input" placeholder="用户名">
+                <input type="password" id="passwordInput" class="login-input" placeholder="密码">
+            </div>
+            <button class="login-btn" id="loginBtn">登录</button>
+            <button class="logout-btn" id="logoutBtn">退出</button>
+            <span class="status-badge" id="statusMessage">游客</span>
+            <span class="token-setup" id="setupTokenBtn">⚙️ 设置Token</span>
+        </div>
+    </div>
+
+    <div class="date-nav">
+        <div class="date-picker">
+            <input type="date" id="fullDatePicker" class="date-input">
+            <button class="today-btn" id="todayBtn">今日</button>
+        </div>
+        <div class="date-grid" id="dateGrid"></div>
+    </div>
+
+    <div class="map-section">
+        <div class="map-container" id="mapContainer">
+            <img id="mapImage" src="" alt="地图" crossorigin="anonymous">
+            <canvas id="mapCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="type-bar" id="typeBar"></div>
+
+    <div class="input-bar">
+        <input type="number" id="pendingNumber" min="1" value="1" step="1">
+        <button class="action-btn" id="confirmAddBtn">✓ 添加</button>
+        <button class="action-btn cancel" id="cancelAddBtn">✗</button>
+    </div>
+    <div id="clickHint" class="tip"></div>
+
+    <div class="summary-card" id="summaryCard">
+        <div class="summary-title" id="summaryRegionName"></div>
+        <div class="summary-stats" id="summaryStats"></div>
+    </div>
+
+    <div class="admin-only admin-panel">
+        <div class="admin-tabs">
+            <button class="admin-tab active" data-tab="map">🗺️ 地图</button>
+            <button class="admin-tab" data-tab="users">👥 用户</button>
+            <button class="admin-tab" data-tab="types">🏷️ 类型</button>
+            <button class="admin-tab" data-tab="export">📊 导出</button>
+        </div>
+        <div class="admin-content" id="adminContent"></div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ========== GitHub 配置 ==========
+        const GITHUB_CONFIG = {
+            owner: 'labs-Newcom',  // 【必填】改成你的GitHub用户名
+            repo: 'labs-Newcom.github.io', // 【必填】改成你的仓库名
+            getToken: () => localStorage.getItem('github_token')
+        };
+        
+        // ========== 超级管理员密码 ==========
+        const SUPER_ADMIN_PASSWORD = 'admin123'; // 【可选】修改为你想要的密码
+        
+        // ========== 数据结构 ==========
+        let regions = [];
+        let markers = [];
+        let markerTypes = [
+            { id: 'A', name: 'A', color: '#c44536' },
+            { id: 'B', name: 'B', color: '#2b6f9b' }
+        ];
+        let users = [
+            { username: 'admin', password: SUPER_ADMIN_PASSWORD, role: 'admin' },
+            { username: 'alice', password: 'a123', role: 'user' },
+            { username: 'bob', password: 'b123', role: 'user' }
+        ];
+        let mapImageData = null;
+        let nextRegionId = 100;
+        let nextMarkerId = 1000;
+
+        // ========== 当前状态 ==========
+        let currentMode = 'visitor';
+        let currentUser = null;
+        let selectedTypeId = 'A';
+        let currentPending = null;
+        let highlightedRegionId = null;
+        const OTHER_REGION_ID = 'other';
+        let currentFullDate = '';
+
+        // ========== 默认地图 ==========
+        const DEFAULT_MAP = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'800\' height=\'600\'%3E%3Crect width=\'800\' height=\'600\' fill=\'%232d5b7c\'/%3E%3Ctext x=\'400\' y=\'300\' fill=\'white\' font-size=\'30\' text-anchor=\'middle\'%3E请上传地图%3C/text%3E%3C/svg%3E';
+
+        // ========== 工具函数 ==========
+        function getTodayDate() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // ========== 初始化日期 ==========
+        currentFullDate = getTodayDate();
+
+        // ========== 画布元素 ==========
+        const mapImage = document.getElementById('mapImage');
+        const mapCanvas = document.getElementById('mapCanvas');
+        const ctx = mapCanvas.getContext('2d');
+        const mapContainer = document.getElementById('mapContainer');
+
+        // ========== 画布函数 ==========
+        function resizeCanvas() {
+            const rect = mapImage.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) {
+                setTimeout(resizeCanvas, 100);
+                return;
+            }
+            mapCanvas.width = rect.width;
+            mapCanvas.height = rect.height;
+            mapCanvas.style.width = rect.width + 'px';
+            mapCanvas.style.height = rect.height + 'px';
+            redrawCanvas();
+        }
+
+        function redrawCanvas() {
+            ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+            if (!mapImage.src || !mapImage.complete) return;
+            
+            const imgRect = mapImage.getBoundingClientRect();
+            
+            regions.forEach(r => {
+                ctx.strokeStyle = r.color || '#f5d742';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([8, 6]);
+                
+                if (r.type === 'rect' && r.x1 !== undefined) {
+                    const left = Math.min(r.x1, r.x2) / 100 * imgRect.width;
+                    const top = Math.min(r.y1, r.y2) / 100 * imgRect.height;
+                    const w = Math.abs(r.x2 - r.x1) / 100 * imgRect.width;
+                    const h = Math.abs(r.y2 - r.y1) / 100 * imgRect.height;
+                    ctx.strokeRect(left, top, w, h);
+                } else if (r.points && r.points.length > 2) {
+                    ctx.beginPath();
+                    r.points.forEach((p, i) => {
+                        const x = p.x / 100 * imgRect.width;
+                        const y = p.y / 100 * imgRect.height;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    });
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+                ctx.setLineDash([]);
+            });
+
+            markers.filter(m => m.date === currentFullDate).forEach(m => {
+                const type = markerTypes.find(t => t.id === m.typeId) || { color: '#aaa' };
+                const mx = m.x / 100 * imgRect.width;
+                const my = m.y / 100 * imgRect.height;
+                
+                ctx.beginPath();
+                ctx.arc(mx, my, 18, 0, 2 * Math.PI);
+                ctx.fillStyle = type.color;
+                ctx.shadowColor = '#000';
+                ctx.shadowBlur = 8;
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+                
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillStyle = '#fff';
+                ctx.shadowBlur = 4;
+                ctx.fillText(m.value, mx - 8, my + 5);
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        mapImage.addEventListener('load', resizeCanvas);
+        window.addEventListener('resize', resizeCanvas);
+
+        // ========== 日期函数 ==========
+        function initDatePicker() {
+            const picker = document.getElementById('fullDatePicker');
+            if (picker) {
+                picker.value = currentFullDate;
+                picker.max = getTodayDate();
+            }
+            
+            updateDateGrid();
+            
+            if (picker) {
+                picker.addEventListener('change', function(e) {
+                    currentFullDate = e.target.value;
+                    updateDateGrid();
+                    refreshTable();
+                    redrawCanvas();
+                });
+            }
+        }
+
+        function updateDateGrid() {
+            const grid = document.getElementById('dateGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            
+            const [year, month] = currentFullDate.split('-');
+            const lastDay = new Date(year, month, 0).getDate();
+            const todayStr = getTodayDate();
+            const datesWithMarkers = new Set(markers.map(m => m.date));
+            
+            for (let d = 1; d <= lastDay; d++) {
+                const dateStr = `${year}-${month}-${String(d).padStart(2,'0')}`;
+                const cell = document.createElement('div');
+                cell.className = 'date-cell';
+                if (dateStr === todayStr) cell.classList.add('today');
+                if (dateStr === currentFullDate) cell.classList.add('selected');
+                if (datesWithMarkers.has(dateStr)) cell.classList.add('has-markers');
+                cell.textContent = d;
+                cell.dataset.date = dateStr;
+                cell.addEventListener('click', () => {
+                    currentFullDate = dateStr;
+                    document.getElementById('fullDatePicker').value = dateStr;
+                    document.querySelectorAll('.date-cell').forEach(c => c.classList.remove('selected'));
+                    cell.classList.add('selected');
+                    refreshTable();
+                    redrawCanvas();
+                });
+                grid.appendChild(cell);
+            }
+        }
+
+        document.getElementById('todayBtn').addEventListener('click', () => {
+            currentFullDate = getTodayDate();
+            document.getElementById('fullDatePicker').value = currentFullDate;
+            updateDateGrid();
+            refreshTable();
+            redrawCanvas();
+        });
+
+        // ========== GitHub Issues 数据函数 ==========
+        async function loadFromGitHub() {
+            const token = GITHUB_CONFIG.getToken();
+            if (!token) {
+                console.log('请先设置 GitHub Token');
+                performInitialRender();
+                return;
+            }
+
+            try {
+                // 获取所有带有 data 标签的 Issues
+                const response = await fetch(
+                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues?labels=data&state=all&sort=created&direction=desc`,
+                    {
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    }
+                );
+                
+                if (!response.ok) throw new Error('加载失败');
+                
+                const issues = await response.json();
+                
+                if (issues.length > 0) {
+                    // 取最新的 Issue
+                    const latestIssue = issues[0];
+                    const data = JSON.parse(latestIssue.body);
+                    
+                    regions = data.regions || [];
+                    markers = data.markers || [];
+                    // 注意：users 不覆盖，保持代码里的默认值
+                    mapImageData = data.mapImage || null;
+                    
+                    if (regions.length) {
+                        nextRegionId = Math.max(...regions.map(r => r.id)) + 1;
+                    }
+                    if (markers.length) {
+                        nextMarkerId = Math.max(...markers.map(m => m.id)) + 1;
+                    }
+                    
+                    console.log('数据加载成功');
+                }
+            } catch (error) {
+                console.error('从 GitHub 加载失败', error);
+            } finally {
+                performInitialRender();
+            }
+        }
+
+        async function saveToGitHub() {
+            const token = GITHUB_CONFIG.getToken();
+            if (!token) {
+                alert('请先设置 GitHub Token');
+                return;
+            }
+
+            try {
+                const data = {
+                    regions,
+                    markers,
+                    mapImage: mapImageData,
+                    lastUpdated: new Date().toISOString()
+                };
+
+                // 创建新的 Issue 来保存数据
+                const response = await fetch(
+                    `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.github.v3+json'
+                        },
+                        body: JSON.stringify({
+                            title: `数据更新 ${new Date().toLocaleString()}`,
+                            body: JSON.stringify(data),
+                            labels: ['data']
+                        })
+                    }
+                );
+
+                if (!response.ok) throw new Error('保存失败');
+                
+                console.log('数据保存成功');
+                
+            } catch (error) {
+                console.error('保存到 GitHub 失败', error);
+                alert('保存失败：' + error.message);
+            }
+        }
+
+        // ========== 设置 Token ==========
+        document.getElementById('setupTokenBtn').addEventListener('click', () => {
+            const token = prompt('请输入您的 GitHub Personal Access Token：\n(需要 repo 权限)');
+            if (token) {
+                localStorage.setItem('github_token', token);
+                alert('Token 已保存！');
+                loadFromGitHub();
+            }
+        });
+
+        // ========== 首次渲染 ==========
+        function performInitialRender() {
+            updateDateGrid();
+            
+            if (mapImageData) {
+                mapImage.src = mapImageData;
+            } else {
+                mapImage.src = DEFAULT_MAP;
+            }
+            
+            updateUIBasedOnUser();
+        }
+
+        // ========== 根据用户状态更新界面 ==========
+        function updateUIBasedOnUser() {
+            if (currentUser) {
+                if (currentUser.role === 'admin') {
+                    document.body.className = 'admin-mode';
+                    renderAdminContent();
+                } else if (currentUser.role === 'user') {
+                    document.body.className = 'user-mode';
+                    renderTypeIcons();
+                }
+                document.getElementById('statusMessage').innerText = currentUser.username;
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                document.getElementById('userLoginFields').style.display = 'none';
+                document.getElementById('adminPasswordInput').style.display = 'none';
+            } else {
+                document.body.className = '';
+                document.getElementById('statusMessage').innerText = '游客';
+                document.getElementById('loginBtn').style.display = 'inline-block';
+                document.getElementById('logoutBtn').style.display = 'none';
+            }
+            
+            refreshTable();
+            redrawCanvas();
+        }
+
+        // ========== 分类图标 ==========
+        function renderTypeIcons() {
+            const bar = document.getElementById('typeBar');
+            if (!bar) return;
+            bar.innerHTML = '';
+            markerTypes.forEach(t => {
+                const div = document.createElement('div');
+                div.className = `type-icon ${selectedTypeId === t.id ? 'selected' : ''}`;
+                div.style.backgroundColor = t.color;
+                div.innerText = t.name;
+                div.dataset.id = t.id;
+                div.onclick = () => {
+                    document.querySelectorAll('.type-icon').forEach(i => i.classList.remove('selected'));
+                    div.classList.add('selected');
+                    selectedTypeId = t.id;
+                };
+                bar.appendChild(div);
+            });
+        }
+
+        // ========== 添加标记 ==========
+        document.getElementById('confirmAddBtn').onclick = async () => {
+            if (!currentPending || !currentUser) return;
+            const val = parseInt(document.getElementById('pendingNumber').value);
+            if (val < 1) return;
+            
+            markers.push({
+                id: nextMarkerId++,
+                regionId: currentPending.regionId,
+                typeId: selectedTypeId,
+                value: val,
+                x: currentPending.x,
+                y: currentPending.y,
+                userId: currentUser.username,
+                date: currentFullDate
+            });
+            
+            await saveToGitHub();
+            redrawCanvas();
+            refreshTable();
+            updateDateGrid();
+            currentPending = null;
+            document.getElementById('clickHint').innerText = '';
+        };
+
+        document.getElementById('cancelAddBtn').onclick = () => {
+            currentPending = null;
+            document.getElementById('clickHint').innerText = '';
+        };
+
+        // ========== 点击地图 ==========
+        mapCanvas.addEventListener('click', (e) => {
+            const rect = mapImage.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width * 100;
+            const y = (e.clientY - rect.top) / rect.height * 100;
+            
+            const region = regions.find(r => {
+                if (r.type === 'rect') {
+                    return x >= Math.min(r.x1, r.x2) && x <= Math.max(r.x1, r.x2) &&
+                           y >= Math.min(r.y1, r.y2) && y <= Math.max(r.y1, r.y2);
+                }
+                return false;
+            });
+
+            const regionId = region ? region.id : OTHER_REGION_ID;
+            highlightedRegionId = regionId;
+            
+            if (currentMode === 'visitor') {
+                showRegionSummary(regionId);
+            } else if (currentMode === 'user' && currentUser) {
+                if (!region) {
+                    alert('请点击区域内添加标记');
+                    return;
+                }
+                currentPending = { x, y, regionId };
+                document.getElementById('clickHint').innerText = `区域: ${region.name || regionId}`;
+            }
+        });
+
+        function showRegionSummary(regionId) {
+            const card = document.getElementById('summaryCard');
+            const title = document.getElementById('summaryRegionName');
+            const stats = document.getElementById('summaryStats');
+            
+            const region = regions.find(r => r.id === regionId);
+            title.innerText = region ? region.name : '其他区域';
+            
+            let html = '';
+            markerTypes.forEach(t => {
+                const sum = markers.filter(m => 
+                    m.regionId === regionId && 
+                    m.typeId === t.id &&
+                    m.date === currentFullDate
+                ).reduce((a, m) => a + m.value, 0);
+                if (sum > 0) {
+                    html += `<div class="stat-item" style="background:${t.color}">${t.name}: ${sum}</div>`;
+                }
+            });
+            
+            if (!html) html = '<div class="stat-item">今日无标记</div>';
+            stats.innerHTML = html;
+            card.style.display = 'block';
+        }
+
+        // ========== 表格刷新 ==========
+        function refreshTable() {
+            const content = document.getElementById('adminContent');
+            if (!content) return;
+            
+            let html = '<table style="width:100%; color:white; border-collapse:collapse;"><tr><th>区域</th>';
+            markerTypes.forEach(t => html += `<th style="background:${t.color}; padding:8px;">${t.name}</th>`);
+            html += '</tr>';
+            
+            regions.forEach(r => {
+                html += `<tr><td style="padding:8px;">${r.name || r.id}</td>`;
+                markerTypes.forEach(t => {
+                    const sum = markers.filter(m => 
+                        m.regionId === r.id && 
+                        m.typeId === t.id &&
+                        m.date === currentFullDate
+                    ).reduce((a, m) => a + m.value, 0);
+                    html += `<td style="padding:8px;">${sum}</td>`;
+                });
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            content.innerHTML = html;
+        }
+
+        // ========== 模式切换 ==========
+        document.getElementById('visitorModeBtn').onclick = () => {
+            currentMode = 'visitor';
+            document.getElementById('summaryCard').style.display = 'none';
+        };
+        
+        document.getElementById('userModeBtn').onclick = () => {
+            if (currentUser && currentUser.role === 'user') {
+                currentMode = 'user';
+                document.body.className = 'user-mode';
+            } else {
+                alert('请先登录普通用户账号');
+            }
+        };
+
+        document.getElementById('adminModeBtn').onclick = () => {
+            document.getElementById('userLoginFields').style.display = 'none';
+            document.getElementById('adminPasswordInput').style.display = 'inline-block';
+        };
+
+        // ========== 登录逻辑 ==========
+        document.getElementById('loginBtn').onclick = () => {
+            const adminPwd = document.getElementById('adminPasswordInput').value;
+            const username = document.getElementById('usernameInput').value;
+            const userPwd = document.getElementById('passwordInput').value;
+            
+            if (adminPwd) {
+                const admin = users.find(u => u.role === 'admin' && u.password === adminPwd);
+                if (admin) {
+                    currentUser = admin;
+                    currentMode = 'admin';
+                    updateUIBasedOnUser();
+                } else {
+                    alert('密码错误');
+                }
+                return;
+            }
+            
+            if (username && userPwd) {
+                const user = users.find(u => u.role === 'user' && u.username === username && u.password === userPwd);
+                if (user) {
+                    currentUser = user;
+                    currentMode = 'user';
+                    updateUIBasedOnUser();
+                } else {
+                    alert('用户名或密码错误');
+                }
+            }
+        };
+
+        document.getElementById('logoutBtn').onclick = () => {
+            currentUser = null;
+            currentMode = 'visitor';
+            updateUIBasedOnUser();
+            document.getElementById('usernameInput').value = '';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('adminPasswordInput').value = '';
+        };
+
+        // ========== 管理员内容渲染（简化版）==========
+        function renderAdminContent() {
+            const content = document.getElementById('adminContent');
+            if (!content) return;
+            content.innerHTML = '<div style="color:white;">管理员面板已加载</div>';
+        }
+
+        // ========== 管理员标签切换 ==========
+        document.querySelectorAll('.admin-tab').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderAdminContent();
+            });
+        });
+
+        // ========== 初始化 ==========
+        initDatePicker();
+        mapImage.src = DEFAULT_MAP;
+        
+        // 检查是否有保存的 Token
+        if (localStorage.getItem('github_token')) {
+            loadFromGitHub();
+        } else {
+            performInitialRender();
+        }
+    })();
+</script>
+</body>
+</html>
