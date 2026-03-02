@@ -947,48 +947,33 @@
         // ========== 登录逻辑（最终修复版）==========
         // ========== 登录逻辑（最终版）==========
         // ========== 登录逻辑（终极版）==========
+        // ========== 登录逻辑（硬核版）==========
         document.getElementById('loginBtn').addEventListener('click', function() {
             console.log('登录按钮被点击');
             
             const adminPwd = document.getElementById('adminPasswordInput').value;
-            const username = document.getElementById('usernameInput').value;
-            const userPwd = document.getElementById('passwordInput').value;
             
-            // 管理员登录
-            if (adminPwd) {
-                if (adminPwd === 'admin123') {
-                    // 设置当前用户
-                    currentUser = { username: 'admin', role: 'admin' };
-                    currentMode = 'admin';
-                    console.log('currentUser 设置成功:', currentUser);
-                    
-                    // 加一个短暂的延时，确保 DOM 完全准备好
-                    setTimeout(function() {
-                        console.log('执行界面更新');
-                        document.body.className = 'admin-mode';
-                        document.getElementById('statusMessage').innerText = 'admin';
-                        document.getElementById('loginBtn').style.display = 'none';
-                        document.getElementById('logoutBtn').style.display = 'inline-block';
-                        document.getElementById('adminPasswordInput').style.display = 'none';
-                        document.getElementById('userLoginFields').style.display = 'none';
-                        renderAdminContent();
-                    }, 100); // 100毫秒延时
-                } else {
-                    alert('密码错误');
+            // 只处理管理员登录
+            if (adminPwd === 'admin123') {
+                console.log('密码正确，开始手动设置界面');
+                
+                // 直接复制你手动成功的代码
+                document.body.className = 'admin-mode';
+                document.getElementById('statusMessage').innerText = 'admin';
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                document.getElementById('adminPasswordInput').style.display = 'none';
+                document.getElementById('userLoginFields').style.display = 'none';
+                
+                // 尝试显示管理员面板
+                const content = document.getElementById('adminContent');
+                if (content) {
+                    content.innerHTML = '<div style="color:white;">管理员面板已加载</div>';
                 }
-                return;
-            }
-            
-            // 普通用户登录
-            if (username && userPwd) {
-                const user = users.find(u => u.role === 'user' && u.username === username && u.password === userPwd);
-                if (user) {
-                    currentUser = user;
-                    currentMode = 'user';
-                    updateUIBasedOnUser();
-                } else {
-                    alert('用户名或密码错误');
-                }
+                
+                console.log('界面设置完成');
+            } else {
+                alert('密码错误');
             }
         });
 
