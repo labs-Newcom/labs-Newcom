@@ -944,7 +944,10 @@
 
         // ========== 登录逻辑 ==========
         // ========== 登录逻辑（最终版）==========
-        document.getElementById('loginBtn').onclick = function() {
+        // ========== 登录逻辑（最终修复版）==========
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            console.log('登录按钮被点击');
+            
             const adminPwd = document.getElementById('adminPasswordInput').value;
             const username = document.getElementById('usernameInput').value;
             const userPwd = document.getElementById('passwordInput').value;
@@ -961,6 +964,7 @@
                 return;
             }
             
+            // 普通用户登录
             if (username && userPwd) {
                 const user = users.find(u => u.role === 'user' && u.username === username && u.password === userPwd);
                 if (user) {
@@ -971,7 +975,7 @@
                     alert('用户名或密码错误');
                 }
             }
-        }
+        });
 
         document.getElementById('logoutBtn').onclick = () => {
             currentUser = null;
