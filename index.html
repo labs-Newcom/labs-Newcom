@@ -991,46 +991,125 @@
 
         // ========== 管理员内容渲染（简化版）==========
         // ========== 管理员内容渲染（完整版）==========
+        // ========== 管理员内容渲染（完整无错版）==========
         function renderAdminContent() {
             const content = document.getElementById('adminContent');
-            if (!content) return;
+            if (!content) {
+                return;
+            }
             
             const activeTab = document.querySelector('.admin-tab.active')?.dataset.tab || 'map';
             
-            let html = '';
+            // 清空内容
+            content.innerHTML = '';
             
             if (activeTab === 'map') {
-                html = `
-                    <div style="color:white; margin-bottom:15px;">🗺️ 地图管理</div>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px;">
-                        <input type="file" id="mapUpload" accept="image/*" style="background:#0e3b57; color:white; padding:8px; border-radius:30px;">
-                        <button class="action-btn" id="clearMapBtn">清除地图</button>
-                    </div>
-                    <div id="regionList"></div>
-                `;
+                // 地图管理
+                const title = document.createElement('div');
+                title.style.color = 'white';
+                title.style.marginBottom = '15px';
+                title.innerText = '🗺️ 地图管理';
+                content.appendChild(title);
+                
+                const uploadDiv = document.createElement('div');
+                uploadDiv.style.display = 'flex';
+                uploadDiv.style.gap = '10px';
+                uploadDiv.style.flexWrap = 'wrap';
+                uploadDiv.style.marginBottom = '20px';
+                
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.id = 'mapUpload';
+                fileInput.accept = 'image/*';
+                fileInput.style.background = '#0e3b57';
+                fileInput.style.color = 'white';
+                fileInput.style.padding = '8px';
+                fileInput.style.borderRadius = '30px';
+                
+                const clearBtn = document.createElement('button');
+                clearBtn.className = 'action-btn';
+                clearBtn.id = 'clearMapBtn';
+                clearBtn.innerText = '清除地图';
+                
+                uploadDiv.appendChild(fileInput);
+                uploadDiv.appendChild(clearBtn);
+                content.appendChild(uploadDiv);
+                
+                const regionDiv = document.createElement('div');
+                regionDiv.id = 'regionList';
+                content.appendChild(regionDiv);
+                
             } else if (activeTab === 'users') {
-                html = `
-                    <div style="color:white; margin-bottom:15px;">👥 用户管理</div>
-                    <div id="userList"></div>
-                `;
+                // 用户管理
+                const title = document.createElement('div');
+                title.style.color = 'white';
+                title.style.marginBottom = '15px';
+                title.innerText = '👥 用户管理';
+                content.appendChild(title);
+                
+                const userDiv = document.createElement('div');
+                userDiv.id = 'userList';
+                userDiv.innerText = '用户管理功能开发中';
+                userDiv.style.color = '#b0daff';
+                content.appendChild(userDiv);
+                
             } else if (activeTab === 'types') {
-                html = `
-                    <div style="color:white; margin-bottom:15px;">🏷️ 类型管理</div>
-                    <div id="typeList"></div>
-                `;
+                // 类型管理
+                const title = document.createElement('div');
+                title.style.color = 'white';
+                title.style.marginBottom = '15px';
+                title.innerText = '🏷️ 类型管理';
+                content.appendChild(title);
+                
+                const typeDiv = document.createElement('div');
+                typeDiv.id = 'typeList';
+                typeDiv.innerText = '类型管理功能开发中';
+                typeDiv.style.color = '#b0daff';
+                content.appendChild(typeDiv);
+                
             } else if (activeTab === 'export') {
-                html = `
-                    <div style="color:white; margin-bottom:15px;">📊 导出报告</div>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <input type="date" id="exportStart" class="date-input">
-                        <span>至</span>
-                        <input type="date" id="exportEnd" class="date-input">
-                        <button class="action-btn" id="doExport">导出ZIP</button>
-                    </div>
-                `;
+                // 导出报告
+                const title = document.createElement('div');
+                title.style.color = 'white';
+                title.style.marginBottom = '15px';
+                title.innerText = '📊 导出报告';
+                content.appendChild(title);
+                
+                const exportDiv = document.createElement('div');
+                exportDiv.style.display = 'flex';
+                exportDiv.style.gap = '10px';
+                exportDiv.style.flexWrap = 'wrap';
+                
+                const startInput = document.createElement('input');
+                startInput.type = 'date';
+                startInput.id = 'exportStart';
+                startInput.className = 'date-input';
+                
+                const span = document.createElement('span');
+                span.style.color = 'white';
+                span.innerText = '至';
+                
+                const endInput = document.createElement('input');
+                endInput.type = 'date';
+                endInput.id = 'exportEnd';
+                endInput.className = 'date-input';
+                
+                const exportBtn = document.createElement('button');
+                exportBtn.className = 'action-btn';
+                exportBtn.id = 'doExport';
+                exportBtn.innerText = '导出ZIP';
+                
+                exportDiv.appendChild(startInput);
+                exportDiv.appendChild(span);
+                exportDiv.appendChild(endInput);
+                exportDiv.appendChild(exportBtn);
+                content.appendChild(exportDiv);
             }
             
-            content.innerHTML = html;
+            // 如果是地图管理，还要渲染区域列表
+            if (activeTab === 'map') {
+                renderRegionList();
+            }
         }
 
         // ========== 管理员标签切换 ==========
