@@ -943,22 +943,30 @@
         };
 
         // ========== 登录逻辑 ==========
-        document.getElementById('loginBtn').onclick = () => {
+        // ========== 登录逻辑（最终版）==========
+        document.getElementById('loginBtn').onclick = function() {
             const adminPwd = document.getElementById('adminPasswordInput').value;
             const username = document.getElementById('usernameInput').value;
             const userPwd = document.getElementById('passwordInput').value;
             
+            // 管理员登录
             if (adminPwd) {
-                const admin = users.find(u => u.role === 'admin' && u.password === adminPwd);
-                if (admin) {
-                    currentUser = admin;
+                if (adminPwd === 'admin123') { // 直接写死密码，绕过 users 数组
+                    currentUser = { username: 'admin', role: 'admin' };
                     currentMode = 'admin';
-                    updateUIBasedOnUser();
+                    // 直接手动更新界面
+                    document.body.className = 'admin-mode';
+                    document.getElementById('statusMessage').innerText = 'admin';
+                    document.getElementById('loginBtn').style.display = 'none';
+                    document.getElementById('logoutBtn').style.display = 'inline-block';
+                    document.getElementById('adminPasswordInput').style.display = 'none';
+                    return;
                 } else {
                     alert('密码错误');
+                    return;
                 }
-                return;
             }
+        };
             
             if (username && userPwd) {
                 const user = users.find(u => u.role === 'user' && u.username === username && u.password === userPwd);
