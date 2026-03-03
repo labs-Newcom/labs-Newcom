@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEMM 打卡 - 上传地图</title>
+    <title>NEMM 打卡 - 持久化</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -45,6 +45,7 @@
         button:hover { background: #1d4f73; }
         button.danger { background: #b16262; }
         button.danger:hover { background: #8f4e4e; }
+        button.token-btn { background: #2e7d5e; }
         
         .map-section {
             margin: 20px 0;
@@ -105,12 +106,24 @@
             margin-bottom: 15px;
             flex-wrap: wrap;
         }
+
+        .token-section {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+
+        .token-status {
+            color: #2e7d5e;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
         <div class="top-bar">
-            <h2>NEMM 打卡 - 上传地图</h2>
+            <h2>NEMM 打卡 - 持久化</h2>
             <div class="login-area">
                 <input type="password" id="adminPasswordInput" placeholder="管理员密码" class="login-input">
                 <button id="loginBtn">登录</button>
@@ -129,6 +142,10 @@
 
         <!-- 管理员面板 -->
         <div id="adminContent" class="admin-content hidden">
+            <div class="token-section">
+                <button id="setupTokenBtn" class="token-btn">⚙️ 设置 GitHub Token</button>
+                <span id="tokenStatus" class="token-status"></span>
+            </div>
             <h3>地图管理</h3>
             <div class="map-tools">
                 <input type="file" id="mapUpload" accept="image/*" class="file-input">
@@ -140,9 +157,18 @@
 
     <script>
         (function() {
+            // ========== GitHub 配置 ==========
+            const GITHUB_CONFIG = {
+                owner: 'labs-Newcom',
+                repo: 'labs-Newcom',
+                getToken: () => localStorage.getItem('github_token')
+            };
+
             // ========== 状态管理 ==========
             let currentUser = null;
             let mapImageData = null;
+            let regions = [];
+            let markers = [];
 
             // ========== DOM 元素 ==========
             const adminPwdInput = document.getElementById('adminPasswordInput');
@@ -153,6 +179,8 @@
             const mapUpload = document.getElementById('mapUpload');
             const clearMapBtn = document.getElementById('clearMapBtn');
             const mapStatus = document.getElementById('mapStatus');
+            const setupTokenBtn = document.getElementById('setupTokenBtn');
+            const tokenStatus = document.getElementById('tokenStatus');
             
             // 地图元素
             const mapImage = document.getElementById('mapImage');
@@ -182,43 +210,173 @@
             function redrawCanvas() {
                 if (!ctx || !mapImage.src) return;
                 ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
-                // 暂时只清空画布，后续添加绘制功能
+                // 后续添加绘制区域功能
             }
 
             mapImage.addEventListener('load', resizeCanvas);
             window.addEventListener('resize', resizeCanvas);
 
-            // 初始化默认地图
-            mapImage.src = DEFAULT_MAP;
+            // ========== GitHub 数据函数 ==========
+            async function loadFromGitHub() {
+                const token = GITHUB_CONFIG.getToken();
+                if (!token) {
+                    updateTokenStatus('未设置 Token', false);
+                    return;
+                }
+
+                try {
+                    console.log('开始加载 GitHub 数据...');
+                    const response = await fetch(
+                        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues?labels=data&state=all&sort=created&direction=desc`,
+                        {
+                            headers: {
+                                'Authorization': `token ${token}`,
+                                'Accept': 'application/vnd.github.v3+json'
+                            }
+                        }
+                    );
+                    
+                    if (!response.ok) throw new Error('加载失败');
+                    
+                    const issues = await response.json();
+                    
+                    if (issues.length > 0) {
+                        const latestIssue = issues[0];
+                        const data = JSON.parse(latestIssue.body);
+                        
+                        regions = data.regions || [];
+                        markers = data.markers || [];
+                        mapImageData = data.mapImage || null;
+                        
+                        if (mapImageData) {
+                            mapImage.src = mapImageData;
+                            mapStatus.innerText = '当前地图: 已保存的地图';
+                        }
+                        
+                        console.log('数据加载成功');
+                        updateTokenStatus('Token 有效', true);
+                    } else {
+                        console.log('没有找到数据');
+                        updateTokenStatus('Token 有效，暂无数据', true);
+                    }
+                    
+                } catch (error) {
+                    console.error('加载失败:', error);
+                    updateTokenStatus('Token 无效或网络错误', false);
+                }
+            }
+
+            async function saveToGitHub() {
+                const token = GITHUB_CONFIG.getToken();
+                if (!token) {
+                    alert('请先设置 GitHub Token');
+                    return;
+                }
+
+                try {
+                    const data = {
+                        regions,
+                        markers,
+                        mapImage: mapImageData,
+                        lastUpdated: new Date().toISOString()
+                    };
+
+                    // 先获取已有的 Issues 列表，找到最新的一条
+                    const listResponse = await fetch(
+                        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues?labels=data&state=all&sort=created&direction=desc`,
+                        {
+                            headers: {
+                                'Authorization': `token ${token}`,
+                                'Accept': 'application/vnd.github.v3+json'
+                            }
+                        }
+                    );
+
+                    const issues = await listResponse.json();
+                    
+                    let url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues`;
+                    let method = 'POST';
+                    
+                    // 如果有现有的 Issue，就更新它
+                    if (issues.length > 0) {
+                        url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${issues[0].number}`;
+                        method = 'PATCH';
+                    }
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/vnd.github.v3+json'
+                        },
+                        body: JSON.stringify({
+                            title: `数据更新 ${new Date().toLocaleString()}`,
+                            body: JSON.stringify(data),
+                            labels: ['data']
+                        })
+                    });
+
+                    if (!response.ok) throw new Error('保存失败');
+                    
+                    console.log('数据保存成功');
+                    
+                } catch (error) {
+                    console.error('保存失败:', error);
+                    alert('保存失败：' + error.message);
+                }
+            }
+
+            function updateTokenStatus(text, isValid) {
+                tokenStatus.innerText = text;
+                tokenStatus.style.color = isValid ? '#2e7d5e' : '#b16262';
+            }
+
+            // ========== 设置 Token ==========
+            setupTokenBtn.addEventListener('click', () => {
+                const token = prompt('请输入您的 GitHub Personal Access Token：\n(需要 repo 权限)');
+                if (token) {
+                    localStorage.setItem('github_token', token);
+                    alert('Token 已保存！');
+                    loadFromGitHub();
+                }
+            });
 
             // ========== 上传地图 ==========
             mapUpload.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
 
-                // 检查文件大小（限制 5MB）
                 if (file.size > 5 * 1024 * 1024) {
                     alert('图片太大，请选择小于5MB的图片');
                     return;
                 }
 
                 const reader = new FileReader();
-                reader.onload = function(event) {
+                reader.onload = async function(event) {
                     mapImageData = event.target.result;
                     mapImage.src = mapImageData;
                     mapStatus.innerText = '当前地图: ' + file.name;
-                    console.log('地图已更新:', file.name);
+                    
+                    // 保存到 GitHub
+                    await saveToGitHub();
+                    
+                    console.log('地图已更新并保存');
                 };
                 reader.readAsDataURL(file);
             });
 
             // ========== 清除地图 ==========
-            clearMapBtn.addEventListener('click', function() {
+            clearMapBtn.addEventListener('click', async function() {
                 mapImageData = null;
                 mapImage.src = DEFAULT_MAP;
                 mapStatus.innerText = '当前地图: 默认灰色背景';
-                mapUpload.value = ''; // 清空文件选择
-                console.log('地图已清除');
+                mapUpload.value = '';
+                
+                // 保存到 GitHub
+                await saveToGitHub();
+                
+                console.log('地图已清除并保存');
             });
 
             // ========== 登录逻辑 ==========
@@ -232,6 +390,11 @@
                     logoutBtn.classList.remove('hidden');
                     statusMsg.innerText = '管理员已登录';
                     adminContent.classList.remove('hidden');
+                    
+                    // 登录后检查 Token 状态
+                    if (GITHUB_CONFIG.getToken()) {
+                        updateTokenStatus('Token 已设置', true);
+                    }
                     
                     console.log('登录成功');
                 } else {
@@ -253,7 +416,17 @@
                 console.log('已退出');
             });
 
-            console.log('上传地图版已启动');
+            // ========== 初始化 ==========
+            mapImage.src = DEFAULT_MAP;
+            
+            // 检查是否有 Token，有的话自动加载数据
+            if (GITHUB_CONFIG.getToken()) {
+                loadFromGitHub();
+            } else {
+                updateTokenStatus('未设置 Token', false);
+            }
+
+            console.log('持久化版已启动');
         })();
     </script>
 </body>
