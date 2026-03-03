@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEMM 打卡 - 细粒度Token版</title>
+    <title>NEMM 打卡 - 细粒度Token版1</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -305,25 +305,25 @@
                     updateTokenStatus('连接失败', false);
                 }
             }
-
+            // savetogithub rev1.0
             async function saveToGitHub() {
                 const token = GITHUB_CONFIG.getToken();
                 if (!token) {
                     alert('请先设置 GitHub Token');
                     return;
                 }
-
+            
                 try {
                     const data = {
-                        regions,
-                        markers,
+                        regions: regions,
+                        markers: markers,
                         mapImage: savedMapImage,
                         lastUpdated: new Date().toISOString()
                     };
-
-                    // 先获取已有的 Issues
+            
+                    // 先获取现有 Issues
                     const listResponse = await fetch(
-                        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues?labels=data&state=all&sort=created&direction=desc`,
+                        `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues?labels=data&state=all`,
                         {
                             headers: {
                                 'Authorization': `Bearer ${token}`,
@@ -331,51 +331,47 @@
                             }
                         }
                     );
-
-                    if (listResponse.status === 401 || listResponse.status === 403) {
-                        showPermissionHint();
-                        throw new Error('权限不足，请检查Token设置');
-                    }
-
+            
                     const issues = await listResponse.json();
                     
                     let url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues`;
                     let method = 'POST';
-                    
+                    let issueNumber = null;
+            
                     if (issues.length > 0) {
-                        url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${issues[0].number}`;
+                        // 找到第一个 open 的 issue，如果没有就取最新的
+                        const existingIssue = issues.find(i => i.state === 'open') || issues[0];
+                        issueNumber = existingIssue.number;
+                        url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${issueNumber}`;
                         method = 'PATCH';
                     }
-
+            
                     const response = await fetch(url, {
                         method: method,
                         headers: {
                             'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/vnd.github.v3+json'
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            title: `数据更新 ${new Date().toLocaleString()}`,
-                            body: JSON.stringify(data),
-                            labels: ['data']
+                            title: `NEMM 数据 ${new Date().toLocaleDateString()}`,
+                            body: JSON.stringify(data, null, 2),
+                            state: 'open'
                         })
                     });
-
-                    if (response.status === 401 || response.status === 403) {
-                        showPermissionHint();
-                        throw new Error('权限不足，请检查Token设置');
-                    }
-
+            
+                    const result = await response.json();
+                    console.log('保存响应:', response.status, result);
+            
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || '保存失败');
+                        throw new Error(result.message || '保存失败');
                     }
-                    
+            
                     console.log('数据保存成功');
-                    updateTokenStatus('Token 有效', true);
+                    alert('保存成功！');
                     
                 } catch (error) {
-                    console.error('保存失败:', error);
+                    console.error('保存失败详细:', error);
                     alert('保存失败：' + error.message);
                 }
             }
@@ -396,23 +392,28 @@
             });
 
             // ========== 上传地图 ==========
+            // ========== 上传地图 ==========
             mapUpload.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
-
+            
                 if (file.size > 5 * 1024 * 1024) {
                     alert('图片太大，请选择小于5MB的图片');
                     return;
                 }
-
+            
                 const reader = new FileReader();
                 reader.onload = async function(event) {
                     savedMapImage = event.target.result;
                     mapImage.src = savedMapImage;
                     mapStatus.innerText = '当前地图: ' + file.name;
                     
-                    await saveToGitHub();
-                    console.log('地图已更新并保存');
+                    try {
+                        await saveToGitHub();
+                        console.log('地图已更新并保存');
+                    } catch (e) {
+                        console.error('保存失败但地图已显示');
+                    }
                 };
                 reader.readAsDataURL(file);
             });
