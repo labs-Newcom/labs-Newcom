@@ -326,7 +326,7 @@
                         `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues?labels=data&state=all`,
                         {
                             headers: {
-                                'Authorization': `Bearer ${token}`,
+                                'Authorization': `token ${token}`,  // 关键修改：token 不是 Bearer
                                 'Accept': 'application/vnd.github.v3+json'
                             }
                         }
@@ -339,7 +339,6 @@
                     let issueNumber = null;
             
                     if (issues.length > 0) {
-                        // 找到第一个 open 的 issue，如果没有就取最新的
                         const existingIssue = issues.find(i => i.state === 'open') || issues[0];
                         issueNumber = existingIssue.number;
                         url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${issueNumber}`;
@@ -349,7 +348,7 @@
                     const response = await fetch(url, {
                         method: method,
                         headers: {
-                            'Authorization': `Bearer ${token}`,
+                            'Authorization': `token ${token}`,  // 关键修改：token 不是 Bearer
                             'Accept': 'application/vnd.github.v3+json',
                             'Content-Type': 'application/json'
                         },
