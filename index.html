@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEMM 打卡 - 持久化</title>
+    <title>NEMM 打卡 - 持久化修复</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -117,13 +117,14 @@
         .token-status {
             color: #2e7d5e;
             font-size: 0.9em;
+            margin-left: 10px;
         }
     </style>
 </head>
 <body>
     <div class="app-container">
         <div class="top-bar">
-            <h2>NEMM 打卡 - 持久化</h2>
+            <h2>NEMM 打卡 - 持久化修复</h2>
             <div class="login-area">
                 <input type="password" id="adminPasswordInput" placeholder="管理员密码" class="login-input">
                 <button id="loginBtn">登录</button>
@@ -166,7 +167,7 @@
 
             // ========== 状态管理 ==========
             let currentUser = null;
-            let mapImageData = null;
+            let savedMapImage = null;  // 统一使用这个变量
             let regions = [];
             let markers = [];
 
@@ -246,11 +247,12 @@
                         
                         regions = data.regions || [];
                         markers = data.markers || [];
-                        mapImageData = data.mapImage || null;
+                        savedMapImage = data.mapImage || null;  // 统一使用 savedMapImage
                         
-                        if (mapImageData) {
-                            mapImage.src = mapImageData;
+                        if (savedMapImage) {
+                            mapImage.src = savedMapImage;
                             mapStatus.innerText = '当前地图: 已保存的地图';
+                            console.log('地图加载成功');
                         }
                         
                         console.log('数据加载成功');
@@ -277,11 +279,11 @@
                     const data = {
                         regions,
                         markers,
-                        mapImage: mapImageData,
+                        mapImage: savedMapImage,  // 统一使用 savedMapImage
                         lastUpdated: new Date().toISOString()
                     };
 
-                    // 先获取已有的 Issues 列表，找到最新的一条
+                    // 先获取已有的 Issues 列表
                     const listResponse = await fetch(
                         `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues?labels=data&state=all&sort=created&direction=desc`,
                         {
@@ -297,7 +299,6 @@
                     let url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues`;
                     let method = 'POST';
                     
-                    // 如果有现有的 Issue，就更新它
                     if (issues.length > 0) {
                         url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${issues[0].number}`;
                         method = 'PATCH';
@@ -354,13 +355,11 @@
 
                 const reader = new FileReader();
                 reader.onload = async function(event) {
-                    mapImageData = event.target.result;
-                    mapImage.src = mapImageData;
+                    savedMapImage = event.target.result;  // 保存到统一变量
+                    mapImage.src = savedMapImage;
                     mapStatus.innerText = '当前地图: ' + file.name;
                     
-                    // 保存到 GitHub
                     await saveToGitHub();
-                    
                     console.log('地图已更新并保存');
                 };
                 reader.readAsDataURL(file);
@@ -368,14 +367,12 @@
 
             // ========== 清除地图 ==========
             clearMapBtn.addEventListener('click', async function() {
-                mapImageData = null;
+                savedMapImage = null;  // 清除统一变量
                 mapImage.src = DEFAULT_MAP;
                 mapStatus.innerText = '当前地图: 默认灰色背景';
                 mapUpload.value = '';
                 
-                // 保存到 GitHub
                 await saveToGitHub();
-                
                 console.log('地图已清除并保存');
             });
 
@@ -391,7 +388,6 @@
                     statusMsg.innerText = '管理员已登录';
                     adminContent.classList.remove('hidden');
                     
-                    // 登录后检查 Token 状态
                     if (GITHUB_CONFIG.getToken()) {
                         updateTokenStatus('Token 已设置', true);
                     }
@@ -419,14 +415,13 @@
             // ========== 初始化 ==========
             mapImage.src = DEFAULT_MAP;
             
-            // 检查是否有 Token，有的话自动加载数据
             if (GITHUB_CONFIG.getToken()) {
                 loadFromGitHub();
             } else {
                 updateTokenStatus('未设置 Token', false);
             }
 
-            console.log('持久化版已启动');
+            console.log('持久化修复版已启动');
         })();
     </script>
 </body>
