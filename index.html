@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEMM 打卡 - 地图版</title>
+    <title>NEMM 打卡 - 上传地图</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -32,6 +32,7 @@
             display: flex; 
             gap: 10px; 
             align-items: center; 
+            flex-wrap: wrap;
         }
         button { 
             padding: 8px 16px; 
@@ -42,8 +43,9 @@
             border-radius: 4px;
         }
         button:hover { background: #1d4f73; }
+        button.danger { background: #b16262; }
+        button.danger:hover { background: #8f4e4e; }
         
-        /* 地图容器 */
         .map-section {
             margin: 20px 0;
         }
@@ -84,18 +86,31 @@
         }
         .hidden { display: none !important; }
         
-        /* 状态提示 */
         .status-badge {
             padding: 4px 8px;
             background: #e9e9e9;
             border-radius: 4px;
+        }
+
+        .file-input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .map-tools {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
         }
     </style>
 </head>
 <body>
     <div class="app-container">
         <div class="top-bar">
-            <h2>NEMM 打卡 - 地图版</h2>
+            <h2>NEMM 打卡 - 上传地图</h2>
             <div class="login-area">
                 <input type="password" id="adminPasswordInput" placeholder="管理员密码" class="login-input">
                 <button id="loginBtn">登录</button>
@@ -114,8 +129,12 @@
 
         <!-- 管理员面板 -->
         <div id="adminContent" class="admin-content hidden">
-            <h3>管理员面板</h3>
-            <p>恭喜！您已成功登录。下一步将添加地图管理功能。</p>
+            <h3>地图管理</h3>
+            <div class="map-tools">
+                <input type="file" id="mapUpload" accept="image/*" class="file-input">
+                <button id="clearMapBtn" class="danger">清除地图</button>
+            </div>
+            <p id="mapStatus">当前地图: 默认灰色背景</p>
         </div>
     </div>
 
@@ -131,6 +150,9 @@
             const logoutBtn = document.getElementById('logoutBtn');
             const statusMsg = document.getElementById('statusMessage');
             const adminContent = document.getElementById('adminContent');
+            const mapUpload = document.getElementById('mapUpload');
+            const clearMapBtn = document.getElementById('clearMapBtn');
+            const mapStatus = document.getElementById('mapStatus');
             
             // 地图元素
             const mapImage = document.getElementById('mapImage');
@@ -169,6 +191,36 @@
             // 初始化默认地图
             mapImage.src = DEFAULT_MAP;
 
+            // ========== 上传地图 ==========
+            mapUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // 检查文件大小（限制 5MB）
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('图片太大，请选择小于5MB的图片');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    mapImageData = event.target.result;
+                    mapImage.src = mapImageData;
+                    mapStatus.innerText = '当前地图: ' + file.name;
+                    console.log('地图已更新:', file.name);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // ========== 清除地图 ==========
+            clearMapBtn.addEventListener('click', function() {
+                mapImageData = null;
+                mapImage.src = DEFAULT_MAP;
+                mapStatus.innerText = '当前地图: 默认灰色背景';
+                mapUpload.value = ''; // 清空文件选择
+                console.log('地图已清除');
+            });
+
             // ========== 登录逻辑 ==========
             loginBtn.addEventListener('click', function() {
                 const pwd = adminPwdInput.value;
@@ -201,7 +253,7 @@
                 console.log('已退出');
             });
 
-            console.log('地图版应用已启动');
+            console.log('上传地图版已启动');
         })();
     </script>
 </body>
