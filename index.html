@@ -3,123 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEMM打卡 - 最终版</title>
+    <title>NEMM打卡 · 极简版</title>
     <style>
-        * { box-sizing: border-box; font-family: system-ui; }
-        body { background: #102231; margin: 0; padding: 20px; color: white; }
-        .app-container { max-width: 1200px; margin: 0 auto; background: #0b1d2b; border-radius: 8px; padding: 20px; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-        .login-area { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        input, button { padding: 8px 16px; border-radius: 4px; border: none; }
+        * { box-sizing: border-box; font-family: system-ui; margin: 0; padding: 0; }
+        body { background: #102231; min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 16px; }
+        .app-container { max-width: 800px; width: 100%; background: #0b1d2b; border-radius: 30px; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; color: white; }
+        .login-area { display: flex; gap: 8px; }
+        input, button { padding: 8px 12px; border-radius: 20px; border: none; }
         button { background: #2e6b94; color: white; cursor: pointer; }
-        button.danger { background: #b16262; }
-        .hidden { display: none !important; }
-        .map-container { position: relative; width: 100%; background: #0a1f2b; border: 2px solid #4f8db5; aspect-ratio: 16/9; margin: 20px 0; }
-        #mapImage, #mapCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
-        #mapImage { object-fit: contain; pointer-events: none; }
-        #mapCanvas { cursor: crosshair; background: transparent; }
-        .admin-panel { background: #123a50; border-radius: 8px; padding: 20px; margin-top: 20px; }
-        .token-status { margin-left: 10px; }
-        .token-status.valid { color: #2e7d5e; }
-        .token-status.invalid { color: #b16262; }
-        .tab-btn { background: #1e506f; margin-right: 5px; }
-        .tab-btn.active { background: #3d80af; }
-        #tabContent { margin-top: 20px; padding: 10px; background: #0b1d2b; border-radius: 4px; }
+        .hidden { display: none; }
+        .map-container { position: relative; width: 100%; background: #0a1f2b; border: 2px solid #4f8db5; border-radius: 20px; aspect-ratio: 4/3; margin-bottom: 20px; }
+        #mapImage { position: absolute; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+        #mapCanvas { position: absolute; width: 100%; height: 100%; cursor: crosshair; background: transparent; }
+        .toolbar { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .type-btn { width: 44px; height: 44px; border-radius: 50%; border: 2px solid transparent; color: white; font-weight: bold; cursor: pointer; }
+        .type-btn.selected { border-color: gold; }
+        .summary { background: #123a50; border-radius: 20px; padding: 16px; color: white; display: none; }
+        .summary-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
+        .stat-item { background: #1f5579; padding: 6px 14px; border-radius: 20px; }
+        .admin-panel { background: #123a50; border-radius: 20px; padding: 16px; margin-top: 16px; color: white; }
     </style>
 </head>
 <body>
 <div class="app-container">
     <div class="top-bar">
-        <h2>NEMM打卡 · 最终版</h2>
+        <h2>NEMM打卡</h2>
         <div class="login-area">
-            <input type="password" id="adminPasswordInput" placeholder="管理员密码">
-            <div id="userLoginFields" class="hidden">
-                <input type="text" id="usernameInput" placeholder="用户名">
-                <input type="password" id="passwordInput" placeholder="密码">
-            </div>
+            <input type="password" id="adminPwd" placeholder="密码">
             <button id="loginBtn">登录</button>
             <button id="logoutBtn" class="hidden">退出</button>
-            <span id="statusMessage">未登录</span>
         </div>
     </div>
 
-    <!-- 地图区域 -->
+    <!-- 地图 -->
     <div class="map-container">
         <img id="mapImage" src="">
         <canvas id="mapCanvas"></canvas>
     </div>
 
+    <!-- 工具栏（用户模式） -->
+    <div id="userToolbar" class="toolbar hidden">
+        <div id="typeButtons"></div>
+        <input type="number" id="markerValue" value="1" min="1" style="width: 80px;">
+        <button id="addMarkerBtn">添加</button>
+        <button id="cancelMarkerBtn">取消</button>
+    </div>
+
+    <!-- 汇总（游客模式） -->
+    <div id="summaryCard" class="summary">
+        <div id="summaryTitle"></div>
+        <div id="summaryStats" class="summary-stats"></div>
+    </div>
+
     <!-- 管理员面板 -->
     <div id="adminPanel" class="admin-panel hidden">
-        <div style="margin-bottom: 20px;">
-            <button id="setupTokenBtn">⚙️ 设置GitHub Token</button>
-            <span id="tokenStatus" class="token-status invalid">未设置</span>
-        </div>
-        <div style="margin-bottom: 20px;">
-            <input type="file" id="mapUpload" accept="image/*">
-            <button id="clearMapBtn" class="danger">清除地图</button>
-            <span id="mapStatus" style="margin-left: 10px;"></span>
-        </div>
-        <div id="adminTabs">
-            <button class="tab-btn active" data-tab="map">🗺️ 地图</button>
-            <button class="tab-btn" data-tab="users">👥 用户</button>
-            <button class="tab-btn" data-tab="export">📊 导出</button>
-        </div>
-        <div id="tabContent"></div>
+        <h4>地图管理</h4>
+        <input type="file" id="mapUpload" accept="image/*">
+        <button id="clearMapBtn">清除</button>
+        <p id="mapStatus"></p>
+        <hr>
+        <h4>数据备份</h4>
+        <button id="saveDataBtn">💾 下载数据</button>
+        <input type="file" id="loadDataBtn" accept=".json">
     </div>
 </div>
 
 <script>
 (function() {
-    // ========== 配置 - 您只需要改这个地方 ==========
-    const CONFIG = {
-        owner: 'labs-Newcom',        // 改成您的GitHub用户名
-        repo: 'labs-Newcom',          // 改成您的仓库名
-        getToken: () => localStorage.getItem('github_token')
-    };
-
     // ========== 数据 ==========
     let regions = [];
     let markers = [];
-    let users = [
-        { username: 'admin', password: 'admin123', role: 'admin' },
-        { username: 'alice', password: 'a123', role: 'user' },
-        { username: 'bob', password: 'b123', role: 'user' }
-    ];
     let markerTypes = [
         { id: 'A', name: 'A', color: '#c44536' },
         { id: 'B', name: 'B', color: '#2b6f9b' }
     ];
     let currentUser = null;
-    let currentMode = 'visitor';
+    let currentMode = 'visitor'; // visitor, user, admin
+    let selectedType = 'A';
+    let currentPending = null;
     let mapImageData = null;
-    let nextId = 1000;
-
+    
+    const DEFAULT_MAP = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'800\' height=\'600\'%3E%3Crect width=\'800\' height=\'600\' fill=\'%232d5b7c\'/%3E%3Ctext x=\'400\' y=\'300\' fill=\'white\' font-size=\'30\' text-anchor=\'middle\'%3E请上传地图%3C/text%3E%3C/svg%3E';
+    
     // ========== DOM ==========
     const mapImage = document.getElementById('mapImage');
     const mapCanvas = document.getElementById('mapCanvas');
     const ctx = mapCanvas.getContext('2d');
-    const adminPanel = document.getElementById('adminPanel');
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
-    const statusMsg = document.getElementById('statusMessage');
-    const adminPwdInput = document.getElementById('adminPasswordInput');
-    const userFields = document.getElementById('userLoginFields');
-    const usernameInput = document.getElementById('usernameInput');
-    const passwordInput = document.getElementById('passwordInput');
-    const setupTokenBtn = document.getElementById('setupTokenBtn');
-    const tokenStatus = document.getElementById('tokenStatus');
+    const adminPwd = document.getElementById('adminPwd');
+    const userToolbar = document.getElementById('userToolbar');
+    const summaryCard = document.getElementById('summaryCard');
+    const adminPanel = document.getElementById('adminPanel');
     const mapUpload = document.getElementById('mapUpload');
     const clearMapBtn = document.getElementById('clearMapBtn');
     const mapStatus = document.getElementById('mapStatus');
+    const saveDataBtn = document.getElementById('saveDataBtn');
+    const loadDataBtn = document.getElementById('loadDataBtn');
+    const addMarkerBtn = document.getElementById('addMarkerBtn');
+    const cancelMarkerBtn = document.getElementById('cancelMarkerBtn');
+    const markerValue = document.getElementById('markerValue');
+    const typeButtons = document.getElementById('typeButtons');
 
-    const DEFAULT_MAP = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'800\' height=\'450\'%3E%3Crect width=\'800\' height=\'450\' fill=\'%232d5b7c\'/%3E%3Ctext x=\'400\' y=\'225\' fill=\'white\' font-size=\'30\' text-anchor=\'middle\'%3E请上传地图%3C/text%3E%3C/svg%3E';
+    // ========== 初始化 ==========
     mapImage.src = DEFAULT_MAP;
+    loadFromLocal();
 
-    // ========== 工具 ==========
+    function loadFromLocal() {
+        const saved = localStorage.getItem('nemm_data');
+        if (saved) {
+            const data = JSON.parse(saved);
+            regions = data.regions || [];
+            markers = data.markers || [];
+            mapImageData = data.mapImage || null;
+            if (mapImageData) mapImage.src = mapImageData;
+        }
+        redrawCanvas();
+    }
+
+    function saveToLocal() {
+        const data = { regions, markers, mapImage: mapImageData };
+        localStorage.setItem('nemm_data', JSON.stringify(data));
+    }
+
+    // ========== 画布 ==========
     function resizeCanvas() {
         const rect = mapImage.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return;
         mapCanvas.width = rect.width;
         mapCanvas.height = rect.height;
         redrawCanvas();
@@ -128,7 +138,6 @@
     window.onresize = resizeCanvas;
 
     function redrawCanvas() {
-        if (!ctx || !mapImage.src) return;
         ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
         const rect = mapImage.getBoundingClientRect();
         
@@ -146,9 +155,8 @@
             ctx.fillText(r.name || `区域${r.id}`, left + 5, top + 20);
         });
 
-        const today = new Date().toISOString().split('T')[0];
-        markers.filter(m => m.date === today).forEach(m => {
-            const type = markerTypes.find(t => t.id === m.typeId) || { color: '#aaa' };
+        markers.forEach(m => {
+            const type = markerTypes.find(t => t.id === m.type) || { color: '#aaa' };
             const mx = m.x / 100 * rect.width;
             const my = m.y / 100 * rect.height;
             ctx.beginPath();
@@ -166,155 +174,45 @@
         });
     }
 
-    // ========== GitHub API ==========
-    async function loadFromGitHub() {
-        const token = CONFIG.getToken();
-        if (!token) {
-            tokenStatus.innerText = '未设置Token';
-            tokenStatus.className = 'token-status invalid';
-            return;
-        }
-
-        try {
-            const res = await fetch(
-                `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/issues?labels=data&state=all`,
-                { headers: { 'Authorization': `token ${token}` } }
-            );
-            if (!res.ok) throw new Error('加载失败');
-            
-            const issues = await res.json();
-            
-            if (issues.length > 0) {
-                const data = JSON.parse(issues[0].body);
-                regions = data.regions || [];
-                markers = data.markers || [];
-                mapImageData = data.mapImage || null;
-                if (mapImageData) mapImage.src = mapImageData;
-                tokenStatus.innerText = 'Token有效';
-                tokenStatus.className = 'token-status valid';
-                redrawCanvas();
-            } else {
-                tokenStatus.innerText = '暂无数据';
-                tokenStatus.className = 'token-status valid';
-            }
-        } catch (e) {
-            console.error(e);
-            tokenStatus.innerText = '加载失败';
-            tokenStatus.className = 'token-status invalid';
-        }
-    }
-
-    async function saveToGitHub() {
-        const token = CONFIG.getToken();
-        if (!token) return alert('请先设置Token');
-
-        try {
-            const data = { regions, markers, mapImage: mapImageData };
-            
-            // 获取现有issue
-            const list = await fetch(
-                `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/issues?labels=data&state=all`,
-                { headers: { 'Authorization': `token ${token}` } }
-            );
-            const issues = await list.json();
-            
-            let url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/issues`;
-            let method = 'POST';
-            
-            if (issues.length > 0) {
-                url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/issues/${issues[0].number}`;
-                method = 'PATCH';
-            }
-
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    title: `地图数据 ${new Date().toLocaleDateString()}`,
-                    body: JSON.stringify(data),
-                    labels: ['data']
-                })
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                alert('保存失败：' + (error.message || '未知错误'));
-            } else {
-                console.log('保存成功');
-            }
-        } catch (e) {
-            alert('网络错误：' + e.message);
-        }
-    }
-
-    // ========== 设置Token ==========
-    setupTokenBtn.onclick = () => {
-        const token = prompt('请输入GitHub Token (需要repo权限)');
-        if (token) {
-            localStorage.setItem('github_token', token);
-            loadFromGitHub();
-        }
-    };
-
-    // ========== 地图上传 ==========
-    mapUpload.onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    // ========== 点击地图 ==========
+    mapCanvas.addEventListener('click', (e) => {
+        const rect = mapImage.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width * 100;
+        const y = (e.clientY - rect.top) / rect.height * 100;
         
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            mapImageData = event.target.result;
-            mapImage.src = mapImageData;
-            mapStatus.innerText = file.name;
-            await saveToGitHub();
-        };
-        reader.readAsDataURL(file);
-    };
+        const region = regions.find(r => 
+            x >= Math.min(r.x1, r.x2) && x <= Math.max(r.x1, r.x2) &&
+            y >= Math.min(r.y1, r.y2) && y <= Math.max(r.y1, r.y2)
+        );
 
-    clearMapBtn.onclick = async () => {
-        mapImageData = null;
-        mapImage.src = DEFAULT_MAP;
-        mapStatus.innerText = '';
-        mapUpload.value = '';
-        await saveToGitHub();
-    };
+        if (currentMode === 'visitor') {
+            // 显示汇总
+            const stats = markers.filter(m => m.regionId === region?.id);
+            document.getElementById('summaryTitle').innerText = region ? region.name : '其他区域';
+            let html = '';
+            markerTypes.forEach(t => {
+                const sum = stats.filter(m => m.type === t.id).reduce((a, m) => a + m.value, 0);
+                if (sum > 0) html += `<div class="stat-item" style="background:${t.color}">${t.name}: ${sum}</div>`;
+            });
+            document.getElementById('summaryStats').innerHTML = html || '<div>今日无标记</div>';
+            summaryCard.style.display = 'block';
+        } 
+        else if (currentMode === 'user' && region) {
+            currentPending = { x, y, regionId: region.id };
+        }
+    });
 
     // ========== 登录 ==========
     loginBtn.onclick = () => {
-        const adminPwd = adminPwdInput.value;
-        const username = usernameInput.value;
-        const userPwd = passwordInput.value;
-
-        if (adminPwd) {
-            if (adminPwd === 'admin123') {
-                currentUser = users.find(u => u.role === 'admin');
-                currentMode = 'admin';
-                adminPanel.classList.remove('hidden');
-                adminPwdInput.classList.add('hidden');
-                loginBtn.classList.add('hidden');
-                logoutBtn.classList.remove('hidden');
-                statusMsg.innerText = '管理员';
-                loadFromGitHub();
-            } else {
-                alert('密码错误');
-            }
-            return;
-        }
-
-        if (username && userPwd) {
-            const user = users.find(u => u.username === username && u.password === userPwd);
-            if (user) {
-                currentUser = user;
-                currentMode = 'user';
-                adminPwdInput.classList.add('hidden');
-                userFields.classList.add('hidden');
-                loginBtn.classList.add('hidden');
-                logoutBtn.classList.remove('hidden');
-                statusMsg.innerText = username;
-            }
+        if (adminPwd.value === 'admin123') {
+            currentUser = { role: 'admin' };
+            currentMode = 'admin';
+            adminPanel.classList.remove('hidden');
+            loginBtn.classList.add('hidden');
+            logoutBtn.classList.remove('hidden');
+            adminPwd.classList.add('hidden');
+        } else {
+            alert('密码错误');
         }
     };
 
@@ -322,59 +220,98 @@
         currentUser = null;
         currentMode = 'visitor';
         adminPanel.classList.add('hidden');
-        adminPwdInput.classList.remove('hidden');
-        adminPwdInput.value = '';
-        userFields.classList.remove('hidden');
-        usernameInput.value = '';
-        passwordInput.value = '';
+        userToolbar.classList.add('hidden');
         loginBtn.classList.remove('hidden');
         logoutBtn.classList.add('hidden');
-        statusMsg.innerText = '未登录';
+        adminPwd.classList.remove('hidden');
+        adminPwd.value = '';
     };
 
-    // ========== 管理员标签 ==========
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const tab = btn.dataset.tab;
-            const content = document.getElementById('tabContent');
-            
-            if (tab === 'map') {
-                let html = '<h4>区域列表</h4>';
-                if (regions.length === 0) {
-                    html += '<p>暂无区域，请在地图上绘制</p>';
-                } else {
-                    regions.forEach(r => {
-                        html += `<div>${r.name || '区域'+r.id} (${r.type || '矩形'})</div>`;
-                    });
-                }
-                content.innerHTML = html;
-            } else if (tab === 'users') {
-                let html = '<h4>用户列表</h4>';
-                users.filter(u => u.role !== 'admin').forEach(u => {
-                    html += `<div>${u.username} - 密码: ${u.password}</div>`;
-                });
-                content.innerHTML = html;
-            } else if (tab === 'export') {
-                content.innerHTML = '<h4>导出功能</h4><p>请点击按钮下载数据</p><button id="exportBtn">导出JSON</button>';
-                setTimeout(() => {
-                    document.getElementById('exportBtn')?.addEventListener('click', () => {
-                        const data = { regions, markers, mapImage: mapImageData };
-                        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `nemm-data-${new Date().toISOString().slice(0,10)}.json`;
-                        a.click();
-                    });
-                }, 100);
-            }
-        };
-    });
+    // ========== 类型按钮 ==========
+    function renderTypeButtons() {
+        typeButtons.innerHTML = '';
+        markerTypes.forEach(t => {
+            const btn = document.createElement('button');
+            btn.className = `type-btn ${selectedType === t.id ? 'selected' : ''}`;
+            btn.style.backgroundColor = t.color;
+            btn.innerText = t.name;
+            btn.onclick = () => {
+                document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedType = t.id;
+            };
+            typeButtons.appendChild(btn);
+        });
+    }
+    renderTypeButtons();
 
-    // ========== 初始化 ==========
-    if (CONFIG.getToken()) loadFromGitHub();
+    // ========== 添加标记 ==========
+    addMarkerBtn.onclick = () => {
+        if (!currentPending || !currentUser) return;
+        const val = parseInt(markerValue.value);
+        markers.push({
+            id: Date.now(),
+            regionId: currentPending.regionId,
+            type: selectedType,
+            value: val,
+            x: currentPending.x,
+            y: currentPending.y
+        });
+        saveToLocal();
+        redrawCanvas();
+        currentPending = null;
+    };
+
+    cancelMarkerBtn.onclick = () => {
+        currentPending = null;
+    };
+
+    // ========== 上传地图 ==========
+    mapUpload.onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            mapImageData = event.target.result;
+            mapImage.src = mapImageData;
+            mapStatus.innerText = file.name;
+            saveToLocal();
+        };
+        reader.readAsDataURL(file);
+    };
+
+    clearMapBtn.onclick = () => {
+        mapImageData = null;
+        mapImage.src = DEFAULT_MAP;
+        mapStatus.innerText = '';
+        mapUpload.value = '';
+        saveToLocal();
+    };
+
+    // ========== 数据备份 ==========
+    saveDataBtn.onclick = () => {
+        const data = { regions, markers, mapImage: mapImageData };
+        const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `nemm-data.json`;
+        a.click();
+    };
+
+    loadDataBtn.onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const data = JSON.parse(event.target.result);
+            regions = data.regions || [];
+            markers = data.markers || [];
+            mapImageData = data.mapImage || null;
+            if (mapImageData) mapImage.src = mapImageData;
+            saveToLocal();
+            redrawCanvas();
+        };
+        reader.readAsText(file);
+    };
 })();
 </script>
 </body>
