@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEMM 打卡 - 持久化修复</title>
+    <title>NEMM 打卡 - 细粒度Token版</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -115,16 +115,27 @@
         }
 
         .token-status {
-            color: #2e7d5e;
-            font-size: 0.9em;
             margin-left: 10px;
+            font-size: 0.9em;
+        }
+        .token-status.valid { color: #2e7d5e; }
+        .token-status.invalid { color: #b16262; }
+
+        .permission-hint {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 0.9em;
         }
     </style>
 </head>
 <body>
     <div class="app-container">
         <div class="top-bar">
-            <h2>NEMM 打卡 - 持久化修复</h2>
+            <h2>NEMM 打卡 - 细粒度Token版</h2>
             <div class="login-area">
                 <input type="password" id="adminPasswordInput" placeholder="管理员密码" class="login-input">
                 <button id="loginBtn">登录</button>
@@ -146,6 +157,13 @@
             <div class="token-section">
                 <button id="setupTokenBtn" class="token-btn">⚙️ 设置 GitHub Token</button>
                 <span id="tokenStatus" class="token-status"></span>
+                <div id="permissionHint" class="permission-hint hidden">
+                    <strong>🔑 细粒度Token权限要求：</strong><br>
+                    - Repository access: <code>All repositories</code><br>
+                    - Contents: <code>Read and write</code><br>
+                    - Issues: <code>Read and write</code><br>
+                    - Metadata: <code>Read-only</code> (自动包含)
+                </div>
             </div>
             <h3>地图管理</h3>
             <div class="map-tools">
@@ -167,7 +185,7 @@
 
             // ========== 状态管理 ==========
             let currentUser = null;
-            let savedMapImage = null;  // 统一使用这个变量
+            let savedMapImage = null;
             let regions = [];
             let markers = [];
 
@@ -182,6 +200,7 @@
             const mapStatus = document.getElementById('mapStatus');
             const setupTokenBtn = document.getElementById('setupTokenBtn');
             const tokenStatus = document.getElementById('tokenStatus');
+            const permissionHint = document.getElementById('permissionHint');
             
             // 地图元素
             const mapImage = document.getElementById('mapImage');
@@ -189,7 +208,7 @@
             const ctx = mapCanvas?.getContext('2d');
             const mapContainer = document.getElementById('mapContainer');
 
-            // 默认地图（灰色背景）
+            // 默认地图
             const DEFAULT_MAP = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'800\' height=\'450\'%3E%3Crect width=\'800\' height=\'450\' fill=\'%23cccccc\'/%3E%3Ctext x=\'400\' y=\'225\' fill=\'%23666666\' font-size=\'30\' text-anchor=\'middle\' dy=\'.3em\'%3E请上传地图%3C/text%3E%3C/svg%3E';
 
             // ========== 画布函数 ==========
@@ -217,6 +236,11 @@
             mapImage.addEventListener('load', resizeCanvas);
             window.addEventListener('resize', resizeCanvas);
 
+            // ========== 显示权限提示 ==========
+            function showPermissionHint() {
+                permissionHint.classList.remove('hidden');
+            }
+
             // ========== GitHub 数据函数 ==========
             async function loadFromGitHub() {
                 const token = GITHUB_CONFIG.getToken();
@@ -231,13 +255,27 @@
                         `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues?labels=data&state=all&sort=created&direction=desc`,
                         {
                             headers: {
-                                'Authorization': `token ${token}`,
+                                'Authorization': `Bearer ${token}`,  // 细粒度Token用 Bearer
                                 'Accept': 'application/vnd.github.v3+json'
                             }
                         }
                     );
                     
-                    if (!response.ok) throw new Error('加载失败');
+                    if (response.status === 401) {
+                        updateTokenStatus('Token 无效或权限不足', false);
+                        showPermissionHint();
+                        return;
+                    }
+                    
+                    if (response.status === 403) {
+                        updateTokenStatus('Token 权限不足', false);
+                        showPermissionHint();
+                        return;
+                    }
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
                     
                     const issues = await response.json();
                     
@@ -247,7 +285,7 @@
                         
                         regions = data.regions || [];
                         markers = data.markers || [];
-                        savedMapImage = data.mapImage || null;  // 统一使用 savedMapImage
+                        savedMapImage = data.mapImage || null;
                         
                         if (savedMapImage) {
                             mapImage.src = savedMapImage;
@@ -264,7 +302,7 @@
                     
                 } catch (error) {
                     console.error('加载失败:', error);
-                    updateTokenStatus('Token 无效或网络错误', false);
+                    updateTokenStatus('连接失败', false);
                 }
             }
 
@@ -279,20 +317,25 @@
                     const data = {
                         regions,
                         markers,
-                        mapImage: savedMapImage,  // 统一使用 savedMapImage
+                        mapImage: savedMapImage,
                         lastUpdated: new Date().toISOString()
                     };
 
-                    // 先获取已有的 Issues 列表
+                    // 先获取已有的 Issues
                     const listResponse = await fetch(
                         `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues?labels=data&state=all&sort=created&direction=desc`,
                         {
                             headers: {
-                                'Authorization': `token ${token}`,
+                                'Authorization': `Bearer ${token}`,
                                 'Accept': 'application/vnd.github.v3+json'
                             }
                         }
                     );
+
+                    if (listResponse.status === 401 || listResponse.status === 403) {
+                        showPermissionHint();
+                        throw new Error('权限不足，请检查Token设置');
+                    }
 
                     const issues = await listResponse.json();
                     
@@ -307,7 +350,7 @@
                     const response = await fetch(url, {
                         method: method,
                         headers: {
-                            'Authorization': `token ${token}`,
+                            'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json',
                             'Accept': 'application/vnd.github.v3+json'
                         },
@@ -318,9 +361,18 @@
                         })
                     });
 
-                    if (!response.ok) throw new Error('保存失败');
+                    if (response.status === 401 || response.status === 403) {
+                        showPermissionHint();
+                        throw new Error('权限不足，请检查Token设置');
+                    }
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || '保存失败');
+                    }
                     
                     console.log('数据保存成功');
+                    updateTokenStatus('Token 有效', true);
                     
                 } catch (error) {
                     console.error('保存失败:', error);
@@ -330,12 +382,12 @@
 
             function updateTokenStatus(text, isValid) {
                 tokenStatus.innerText = text;
-                tokenStatus.style.color = isValid ? '#2e7d5e' : '#b16262';
+                tokenStatus.className = 'token-status ' + (isValid ? 'valid' : 'invalid');
             }
 
             // ========== 设置 Token ==========
             setupTokenBtn.addEventListener('click', () => {
-                const token = prompt('请输入您的 GitHub Personal Access Token：\n(需要 repo 权限)');
+                const token = prompt('请输入您的 GitHub Fine-grained Token：\n(需要 Contents: write, Issues: write 权限)');
                 if (token) {
                     localStorage.setItem('github_token', token);
                     alert('Token 已保存！');
@@ -355,7 +407,7 @@
 
                 const reader = new FileReader();
                 reader.onload = async function(event) {
-                    savedMapImage = event.target.result;  // 保存到统一变量
+                    savedMapImage = event.target.result;
                     mapImage.src = savedMapImage;
                     mapStatus.innerText = '当前地图: ' + file.name;
                     
@@ -367,7 +419,7 @@
 
             // ========== 清除地图 ==========
             clearMapBtn.addEventListener('click', async function() {
-                savedMapImage = null;  // 清除统一变量
+                savedMapImage = null;
                 mapImage.src = DEFAULT_MAP;
                 mapStatus.innerText = '当前地图: 默认灰色背景';
                 mapUpload.value = '';
@@ -389,7 +441,9 @@
                     adminContent.classList.remove('hidden');
                     
                     if (GITHUB_CONFIG.getToken()) {
-                        updateTokenStatus('Token 已设置', true);
+                        loadFromGitHub();
+                    } else {
+                        updateTokenStatus('未设置 Token', false);
                     }
                     
                     console.log('登录成功');
@@ -421,7 +475,7 @@
                 updateTokenStatus('未设置 Token', false);
             }
 
-            console.log('持久化修复版已启动');
+            console.log('细粒度Token版已启动');
         })();
     </script>
 </body>
