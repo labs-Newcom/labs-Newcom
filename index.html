@@ -3,32 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEMM 打卡 - 简化版</title>
+    <title>NEMM 打卡 - 地图版</title>
     <style>
-        /* 极简样式，确保布局干净 */
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
-        .app-container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .login-area { display: flex; gap: 10px; align-items: center; }
-        button { padding: 8px 16px; cursor: pointer; }
-        #adminContent { margin-top: 20px; padding: 20px; background: #e9e9e9; border-radius: 4px; }
-        .hidden { display: none; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: sans-serif; 
+            background: #f0f2f5; 
+            padding: 20px; 
+            margin: 0;
+        }
+        .app-container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        .top-bar { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .login-area { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+        }
+        button { 
+            padding: 8px 16px; 
+            cursor: pointer; 
+            background: #2e6b94;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover { background: #1d4f73; }
+        
+        /* 地图容器 */
+        .map-section {
+            margin: 20px 0;
+        }
+        .map-container {
+            position: relative;
+            width: 100%;
+            background: #e9e9e9;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+        }
+        #mapImage {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #e9e9e9;
+            pointer-events: none;
+        }
+        #mapCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            background: transparent;
+        }
+        
+        .admin-content { 
+            margin-top: 20px; 
+            padding: 20px; 
+            background: #e9e9e9; 
+            border-radius: 4px; 
+        }
+        .hidden { display: none !important; }
+        
+        /* 状态提示 */
+        .status-badge {
+            padding: 4px 8px;
+            background: #e9e9e9;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
         <div class="top-bar">
-            <h2>NEMM 打卡 (简化版)</h2>
+            <h2>NEMM 打卡 - 地图版</h2>
             <div class="login-area">
-                <input type="password" id="adminPasswordInput" placeholder="管理员密码">
+                <input type="password" id="adminPasswordInput" placeholder="管理员密码" class="login-input">
                 <button id="loginBtn">登录</button>
                 <button id="logoutBtn" class="hidden">退出</button>
-                <span id="statusMessage">未登录</span>
+                <span id="statusMessage" class="status-badge">未登录</span>
             </div>
         </div>
-        <div id="adminContent" class="hidden">
+
+        <!-- 地图区域 -->
+        <div class="map-section">
+            <div class="map-container" id="mapContainer">
+                <img id="mapImage" src="" alt="地图">
+                <canvas id="mapCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- 管理员面板 -->
+        <div id="adminContent" class="admin-content hidden">
             <h3>管理员面板</h3>
-            <p>恭喜！您已成功登录。</p>
+            <p>恭喜！您已成功登录。下一步将添加地图管理功能。</p>
         </div>
     </div>
 
@@ -36,6 +123,7 @@
         (function() {
             // ========== 状态管理 ==========
             let currentUser = null;
+            let mapImageData = null;
 
             // ========== DOM 元素 ==========
             const adminPwdInput = document.getElementById('adminPasswordInput');
@@ -43,14 +131,50 @@
             const logoutBtn = document.getElementById('logoutBtn');
             const statusMsg = document.getElementById('statusMessage');
             const adminContent = document.getElementById('adminContent');
+            
+            // 地图元素
+            const mapImage = document.getElementById('mapImage');
+            const mapCanvas = document.getElementById('mapCanvas');
+            const ctx = mapCanvas?.getContext('2d');
+            const mapContainer = document.getElementById('mapContainer');
+
+            // 默认地图（灰色背景）
+            const DEFAULT_MAP = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'800\' height=\'450\'%3E%3Crect width=\'800\' height=\'450\' fill=\'%23cccccc\'/%3E%3Ctext x=\'400\' y=\'225\' fill=\'%23666666\' font-size=\'30\' text-anchor=\'middle\' dy=\'.3em\'%3E请上传地图%3C/text%3E%3C/svg%3E';
+
+            // ========== 画布函数 ==========
+            function resizeCanvas() {
+                if (!mapCanvas || !mapImage) return;
+                
+                const rect = mapImage.getBoundingClientRect();
+                if (rect.width === 0 || rect.height === 0) {
+                    setTimeout(resizeCanvas, 100);
+                    return;
+                }
+                mapCanvas.width = rect.width;
+                mapCanvas.height = rect.height;
+                mapCanvas.style.width = rect.width + 'px';
+                mapCanvas.style.height = rect.height + 'px';
+                redrawCanvas();
+            }
+
+            function redrawCanvas() {
+                if (!ctx || !mapImage.src) return;
+                ctx.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+                // 暂时只清空画布，后续添加绘制功能
+            }
+
+            mapImage.addEventListener('load', resizeCanvas);
+            window.addEventListener('resize', resizeCanvas);
+
+            // 初始化默认地图
+            mapImage.src = DEFAULT_MAP;
 
             // ========== 登录逻辑 ==========
             loginBtn.addEventListener('click', function() {
                 const pwd = adminPwdInput.value;
-                if (pwd === 'admin123') { // 固定密码
+                if (pwd === 'admin123') {
                     currentUser = { username: 'admin' };
                     
-                    // 更新界面
                     adminPwdInput.classList.add('hidden');
                     loginBtn.classList.add('hidden');
                     logoutBtn.classList.remove('hidden');
@@ -67,7 +191,6 @@
             logoutBtn.addEventListener('click', function() {
                 currentUser = null;
                 
-                // 恢复界面
                 adminPwdInput.classList.remove('hidden');
                 adminPwdInput.value = '';
                 loginBtn.classList.remove('hidden');
@@ -78,7 +201,7 @@
                 console.log('已退出');
             });
 
-            console.log('简化版应用已启动');
+            console.log('地图版应用已启动');
         })();
     </script>
 </body>
